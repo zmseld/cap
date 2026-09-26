@@ -50,7 +50,7 @@ jobs:
         run: bun run scripts/build-unbranded.mjs
 
       - name: Publish to NPM
-        cwd: ./widget/src
+        working-directory: ./widget/src
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
