@@ -1,0 +1,42 @@
+services:
+  cap:
+    image: ghcr.io/zmseld/cap-standalone:latest
+    container_name: cap-standalone
+    restart: unless-stopped
+    ports:
+      - "${CAP_PORT:-3000}:3000"
+    environment:
+      - ADMIN_KEY=${ADMIN_KEY:-change_this_super_secret_admin_key}
+      - REDIS_URL=redis://valkey:6379
+      - SERVER_PORT=3000
+      - SERVER_HOSTNAME=0.0.0.0
+      - ENABLE_ASSETS_SERVER=true
+      - RATELIMIT_IP_HEADER=${RATELIMIT_IP_HEADER:-X-Forwarded-For}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+    depends_on:
+      valkey:
+        condition: service_healthy
+    networks:
+      - cap-net
+
+  valkey:
+    image: valkey/valkey:9-alpine
+    container_name: cap-valkey
+    restart: unless-stopped
+    volumes:
+      - valkey-data:/data
+    command: valkey-server --save 60 1 --loglevel warning --maxmemory-policy noeviction
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - cap-net
+
+networks:
+  cap-net:
+    driver: bridge
+
+volumes:
+  valkey-data:
